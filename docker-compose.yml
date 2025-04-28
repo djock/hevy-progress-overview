@@ -16,5 +16,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
+
