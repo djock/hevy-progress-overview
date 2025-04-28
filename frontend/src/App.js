@@ -7,9 +7,9 @@ function App() {
   const [routineFolders, setRoutineFolders] = useState([]);
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const [workouts, setWorkouts] = useState([]);
+  const [setWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [selectedWorkout] = useState(null);
   const [exerciseTypes, setExerciseTypes] = useState([]);
   const [selectedExerciseType, setSelectedExerciseType] = useState(null);
   const [exerciseHistory, setExerciseHistory] = useState([]);
@@ -66,10 +66,6 @@ function App() {
     }
   };
 
-  const getWorkoutsForRoutine = (routineId) => {
-    fetchRoutineWorkouts(routineId);
-  };
-
   const selectRoutine = (routineId) => {
     setSelectedRoutine(routineId);
     
@@ -95,20 +91,6 @@ function App() {
     setSelectedRoutine(null);
     setSelectedExerciseType(null);
     setExerciseHistory([]);
-  };
-
-  const fetchWorkoutDetails = async (workoutId) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`/api/workouts/${workoutId}`);
-      if (response.data) {
-        setSelectedWorkout(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching workout details:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const extractExerciseTypes = (workouts) => {
@@ -186,7 +168,7 @@ function App() {
         <h2 className="text-xl font-semibold mb-2">Folders</h2>
         <div className="flex flex-wrap gap-2 mb-4">
           <button
-            className={`px-4 py-2 rounded ${selectedFolder === null ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded folder ${selectedFolder === null ? 'selected' : ''}`}
             onClick={() => filterRoutinesByFolder(null)}
           >
             All Routines
@@ -194,7 +176,7 @@ function App() {
           {routineFolders && routineFolders.map(folder => (
             <button
               key={folder.id}
-              className={`px-4 py-2 rounded ${selectedFolder === folder.id ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              className={`px-4 py-2 rounded folder ${selectedFolder === folder.id ? 'selected' : ''}`}
               onClick={() => filterRoutinesByFolder(folder.id)}
             >
               {folder.title}
@@ -211,7 +193,7 @@ function App() {
             .map(routine => (
               <button
                 key={routine.id}
-                className={`px-4 py-2 rounded ${selectedRoutine === routine.id ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                className={`px-4 py-2 rounded routine ${selectedRoutine === routine.id ? 'selected' : ''}`}
                 onClick={() => selectRoutine(routine.id)}
               >
                 {routine.title || "Unnamed Routine"}
@@ -230,7 +212,7 @@ function App() {
               {exerciseTypes.map((exercise, index) => (
                 <button
                   key={index}
-                  className={`px-4 py-2 rounded ${selectedExerciseType === exercise ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                  className={`px-4 py-2 rounded exercise ${selectedExerciseType === exercise ? 'selected' : ''}`}
                   onClick={() => fetchExerciseHistory(exercise)}
                 >
                   {exercise}

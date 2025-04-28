@@ -17,8 +17,31 @@ button {
   background-color: #f0f0f0;
 }
 
-button.selected {
-  background-color: #0066cc;
+/* Button styling for different categories */
+button.folder {
+  background-color: #f0f0f0;
+}
+
+button.folder.selected {
+  background-color: #4a6da7;
+  color: white;
+}
+
+button.routine {
+  background-color: #f0f0f0;
+}
+
+button.routine.selected {
+  background-color: #6a8f3d;
+  color: white;
+}
+
+button.exercise {
+  background-color: #f0f0f0;
+}
+
+button.exercise.selected {
+  background-color: #b86a3d;
   color: white;
 }
 

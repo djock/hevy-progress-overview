@@ -1,6 +1,6 @@
-# Hevy Progress Overview
+### A web application for tracking and visualizing your workout progress from the Hevy app.
 
-A web application for tracking and visualizing each exercise's progress from the Hevy app workouts.
+![Hevy Progress Overview](https://i.imgur.com/YPS5rib.gif)
 
 ## Overview
 
