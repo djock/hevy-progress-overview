@@ -66,38 +66,8 @@ function App() {
     }
   };
 
-  // Add this function to get workouts from the cached data
   const getWorkoutsForRoutine = (routineId) => {
-    setLoading(true);
-    try {
-      // Use the existing workouts data from the cache
-      const response = axios.get('/api/workouts');
-      response.then(res => {
-        if (res.data && Array.isArray(res.data)) {
-          // Filter workouts by routine_id
-          const routineWorkouts = res.data.filter(workout => workout.routine_id === routineId);
-          setWorkouts(routineWorkouts);
-          
-          // Extract exercise types from these workouts
-          const exerciseTypeArray = extractExerciseTypes(routineWorkouts);
-          setExerciseTypes(exerciseTypeArray || []); // Ensure it's an array
-        } else {
-          setWorkouts([]);
-          setExerciseTypes([]);
-        }
-        setLoading(false);
-      }).catch(error => {
-        console.error('Error fetching workouts from cache:', error);
-        setWorkouts([]);
-        setExerciseTypes([]);
-        setLoading(false);
-      });
-    } catch (error) {
-      console.error('Error in getWorkoutsForRoutine:', error);
-      setWorkouts([]);
-      setExerciseTypes([]);
-      setLoading(false);
-    }
+    fetchRoutineWorkouts(routineId);
   };
 
   const selectRoutine = (routineId) => {

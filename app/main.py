@@ -301,28 +301,6 @@ def get_routine_folders():
     
     return JSONResponse(content=all_folders)
 
-@app.get("/api/routines/{routine_id}/workouts")
-def get_routine_workouts(routine_id: str, limit: int = 3):
-    """Get the most recent workouts for a specific routine"""
-    url = f"{BASE_URL}/workouts?routine_id={routine_id}&limit={limit}"
-    resp = requests.get(url, headers=HEADERS)
-    
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    
-    return JSONResponse(content=resp.json())
-
-@app.get("/api/workouts/{workout_id}")
-def get_workout_details(workout_id: str):
-    """Get detailed information about a specific workout"""
-    url = f"{BASE_URL}/workouts/{workout_id}"
-    resp = requests.get(url, headers=HEADERS)
-    
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    
-    return JSONResponse(content=resp.json())
-
 @app.get("/api/routines/{routine_id}/exercises")
 def get_routine_exercises(routine_id: str):
     """Get all exercises for a specific routine"""

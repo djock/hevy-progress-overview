@@ -46,8 +46,7 @@ yarn-error.log*
 *.sublime-project
 *.sublime-workspace
 
-# Application data
-workouts.json
-*/workouts.json
+# Application data - consolidated rules
+data/
+**/data/
 **/workouts.json
-app/data/workouts.json
