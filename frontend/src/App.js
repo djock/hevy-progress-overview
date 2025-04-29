@@ -3,17 +3,19 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
+  const [workouts, setWorkouts] = useState([]);
   const [routines, setRoutines] = useState([]);
   const [routineFolders, setRoutineFolders] = useState([]);
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const [setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedWorkout] = useState(null);
   const [exerciseTypes, setExerciseTypes] = useState([]);
   const [selectedExerciseType, setSelectedExerciseType] = useState(null);
   const [exerciseHistory, setExerciseHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedWorkout] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshingRoutines, setRefreshingRoutines] = useState(false);
+  const [refreshingFolders, setRefreshingFolders] = useState(false);
 
   useEffect(() => {
     fetchRoutineFolders();
@@ -50,17 +52,27 @@ function App() {
   };
 
   const fetchRoutineWorkouts = async (routineId) => {
+    setSelectedRoutine(routineId);
     setLoading(true);
+    
     try {
-      const response = await axios.get(`/api/routines/${routineId}/workouts`);
-      if (response.data && response.data.workouts) {
-        setWorkouts(response.data.workouts);
-      } else {
-        setWorkouts([]);
+      const response = await fetch(`/api/routines/${routineId}/workouts`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch workouts');
       }
+      
+      const data = await response.json();
+      setWorkouts(data); // This is where the error occurs
+      
+      // Extract unique exercise types from workouts
+      const exerciseTypes = [...new Set(data.flatMap(workout => 
+        workout.exercises.map(exercise => exercise.exercise_type)
+      ))];
+      
+      setExerciseTypes(exerciseTypes);
+      setSelectedExerciseType(null);
     } catch (error) {
-      console.error('Error fetching routine workouts:', error);
-      setWorkouts([]);
+      console.error('Error fetching workouts:', error);
     } finally {
       setLoading(false);
     }
@@ -150,6 +162,32 @@ function App() {
     }
   };
 
+  const refreshRoutines = async () => {
+    setRefreshingRoutines(true);
+    try {
+      await axios.get('/api/routines/refresh');
+      // After refresh, update our data
+      await fetchRoutines();
+    } catch (error) {
+      console.error('Error refreshing routines:', error);
+    } finally {
+      setRefreshingRoutines(false);
+    }
+  };
+
+  const refreshRoutineFolders = async () => {
+    setRefreshingFolders(true);
+    try {
+      await axios.get('/api/routine_folders/refresh');
+      // After refresh, update our data
+      await fetchRoutineFolders();
+    } catch (error) {
+      console.error('Error refreshing routine folders:', error);
+    } finally {
+      setRefreshingFolders(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Workout Progress Tracker</h1>
@@ -160,7 +198,23 @@ function App() {
           onClick={refreshWorkouts}
           disabled={refreshing}
         >
-          {refreshing ? 'Refreshing...' : 'Refresh Workouts'}
+          {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts'}
+        </button>
+        
+        <button 
+          className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+          onClick={refreshRoutines}
+          disabled={refreshingRoutines}
+        >
+          {refreshingRoutines ? 'Refreshing Routines...' : 'Refresh Routines'}
+        </button>
+        
+        <button 
+          className="bg-purple-500 text-white px-4 py-2 rounded"
+          onClick={refreshRoutineFolders}
+          disabled={refreshingFolders}
+        >
+          {refreshingFolders ? 'Refreshing Folders...' : 'Refresh Folders'}
         </button>
       </div>
       
@@ -251,9 +305,46 @@ function App() {
                     {Array.from({ length: Math.max(...exerciseHistory.map(ex => ex.sets ? ex.sets.length : 0)) }, (_, i) => {
                       // Find the set at this position if it exists
                       const set = exercise.sets && exercise.sets.length > i ? exercise.sets[i] : null;
+                      
+                      // Get previous workout's set for comparison (if not the first workout)
+                      const prevExercise = exerciseIndex > 0 ? exerciseHistory[exerciseIndex - 1] : null;
+                      const prevSet = prevExercise && prevExercise.sets && prevExercise.sets.length > i ? prevExercise.sets[i] : null;
+                      
+                      // Calculate performance metrics
+                      const currentVolume = set ? (set.reps || 0) * (set.weight_kg || 0) : 0;
+                      const prevVolume = prevSet ? (prevSet.reps || 0) * (prevSet.weight_kg || 0) : 0;
+                      
+                      // Determine cell color based on performance comparison
+                      let cellColor = "";
+                      
+                      // Check if we need to add an asterisk (12+ reps AND last row AND not the first set)
+                      const isLastRow = exerciseIndex === exerciseHistory.length - 1;
+                      const isNotFirstSet = i > 0; // Skip Set 1 (index 0)
+                      const shouldAddRocketEmoji = isLastRow && isNotFirstSet && set && set.reps >= 12;
+                      const shouldAddMuscleEmoji = isLastRow && isNotFirstSet && set && set.reps < 12;
+
+                      console.log('shouldAddMuscleEmoji ' + shouldAddMuscleEmoji)
+
+                      // Apply comparison coloring
+                      if (prevVolume > 0) {
+                        const percentChange = ((currentVolume - prevVolume) / prevVolume) * 100;
+                        
+                        if (percentChange === 0) {
+                          cellColor = "bg-orange-100"; // Same performance
+                        } else if (percentChange > 15) {
+                          cellColor = "bg-green-300"; // Significant improvement
+                        } else if (percentChange > 5) {
+                          cellColor = "bg-green-100"; // Slight improvement
+                        } else if (percentChange < -15) {
+                          cellColor = "bg-red-300"; // Significant decrease
+                        } else if (percentChange < 0) {
+                          cellColor = "bg-red-100"; // Slight decrease
+                        }
+                      }
+                      
                       return (
-                        <td key={i} className="py-2 px-4 border-b text-center">
-                          {set ? `${set.reps || '-'} @ ${set.weight_kg || '-'}kg` : '-'}
+                        <td key={i} className={`py-2 px-4 border-b text-center ${cellColor}`}>
+                          {set ? `${set.reps || '-'} @ ${set.weight_kg || '-'}kg${shouldAddRocketEmoji ? ' 🚀' : ''}${shouldAddMuscleEmoji ? ' 💪' : ''}` : '-'}
                         </td>
                       );
                     })}
@@ -261,6 +352,8 @@ function App() {
                 ))}
               </tbody>
             </table>
+            <p className="text-sm text-gray-600 mt-2">🚀 Weight can be increased in this situation</p>
+            <p className="text-sm text-gray-600 mt-2">💪 Still have to work on increasing reps</p>
           </div>
         </div>
       )}

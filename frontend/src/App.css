@@ -61,3 +61,35 @@ th {
   background-color: #333;
   color: white;
 }
+
+/* Performance comparison colors */
+.bg-green-100 {
+  background-color: #d1fae5;
+}
+
+.bg-green-300 {
+  background-color: #6ee7b7;
+}
+
+.bg-red-100 {
+  background-color: #fee2e2;
+}
+
+.bg-red-300 {
+  background-color: #fca5a5;
+}
+
+.bg-orange-100 {
+  background-color: #ffedd5;
+}
+
+.bg-purple-300 {
+  background-color: #d8b4fe;
+}
+
+/* Optional: Add a darker purple if you want to indicate even higher reps */
+.bg-purple-400 {
+  background-color: #c084fc;
+}
+
+
