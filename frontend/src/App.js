@@ -189,20 +189,12 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Workout Progress Tracker</h1>
+    <div className="container">
+      <h1 className="text-2xl font-bold mb-4">Hevy Progress Tracker</h1>
       
       <div className="mb-4">
         <button 
-          className="bg-green-500 text-white px-4 py-2 rounded mr-2"
-          onClick={refreshWorkouts}
-          disabled={refreshing}
-        >
-          {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts'}
-        </button>
-        
-        <button 
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+          className="bg-green-500 rounded mr-2"
           onClick={refreshRoutines}
           disabled={refreshingRoutines}
         >
@@ -210,11 +202,19 @@ function App() {
         </button>
         
         <button 
-          className="bg-purple-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 rounded mr-2"
           onClick={refreshRoutineFolders}
           disabled={refreshingFolders}
         >
           {refreshingFolders ? 'Refreshing Folders...' : 'Refresh Folders'}
+        </button>
+        
+        <button 
+          className="bg-purple-500 rounded"
+          onClick={refreshWorkouts}
+          disabled={refreshing}
+        >
+          {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts'}
         </button>
       </div>
       
@@ -222,7 +222,7 @@ function App() {
         <h2 className="text-xl font-semibold mb-2">Folders</h2>
         <div className="flex flex-wrap gap-2 mb-4">
           <button
-            className={`px-4 py-2 rounded folder ${selectedFolder === null ? 'selected' : ''}`}
+            className={`rounded folder ${selectedFolder === null ? 'selected' : ''}`}
             onClick={() => filterRoutinesByFolder(null)}
           >
             All Routines
@@ -230,7 +230,7 @@ function App() {
           {routineFolders && routineFolders.map(folder => (
             <button
               key={folder.id}
-              className={`px-4 py-2 rounded folder ${selectedFolder === folder.id ? 'selected' : ''}`}
+              className={`rounded folder ${selectedFolder === folder.id ? 'selected' : ''}`}
               onClick={() => filterRoutinesByFolder(folder.id)}
             >
               {folder.title}
@@ -242,12 +242,20 @@ function App() {
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Routines</h2>
         <div className="flex flex-wrap gap-2">
-          {routines && routines
+          {routines && [...routines]
+            .sort((a, b) => {
+              // Sort by created_at date if available (newest first)
+              if (a.created_at && b.created_at) {
+                return new Date(b.created_at) - new Date(a.created_at);
+              }
+              // Fallback to reverse order if no dates
+              return 0;
+            })
             .filter(routine => selectedFolder === null || routine.folder_id === selectedFolder)
             .map(routine => (
               <button
                 key={routine.id}
-                className={`px-4 py-2 rounded routine ${selectedRoutine === routine.id ? 'selected' : ''}`}
+                className={`rounded routine ${selectedRoutine === routine.id ? 'selected' : ''}`}
                 onClick={() => selectRoutine(routine.id)}
               >
                 {routine.title || "Unnamed Routine"}
@@ -262,11 +270,11 @@ function App() {
           {loading ? (
             <p>Loading exercises...</p>
           ) : exerciseTypes && exerciseTypes.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col items-start gap-2">
               {exerciseTypes.map((exercise, index) => (
                 <button
                   key={index}
-                  className={`px-4 py-2 rounded exercise ${selectedExerciseType === exercise ? 'selected' : ''}`}
+                  className={`rounded exercise ${selectedExerciseType === exercise ? 'selected' : ''}`}
                   onClick={() => fetchExerciseHistory(exercise)}
                 >
                   {exercise}
@@ -285,20 +293,20 @@ function App() {
             {selectedExerciseType} History
           </h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
+            <table className="bg-white border border-gray-300">
               <thead>
                 <tr>
-                  <th className="py-2 px-4 border-b">Date</th>
+                  <th>Date</th>
                   {/* Find max number of sets across all exercises */}
                   {Array.from({ length: Math.max(...exerciseHistory.map(ex => ex.sets ? ex.sets.length : 0)) }, (_, i) => (
-                    <th key={i} className="py-2 px-4 border-b">Set {i + 1}</th>
+                    <th key={i} data-set-number={i + 1}>Set {i + 1}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {exerciseHistory.map((exercise, exerciseIndex) => (
                   <tr key={exerciseIndex}>
-                    <td className="py-2 px-4 border-b">
+                    <td>
                       {new Date(exercise.workout_date).toLocaleDateString()}
                     </td>
                     {/* Create cells for each possible set position */}
@@ -320,11 +328,11 @@ function App() {
                       // Check if we need to add an asterisk (12+ reps AND last row AND not the first set)
                       const isLastRow = exerciseIndex === exerciseHistory.length - 1;
                       const isNotFirstSet = i > 0; // Skip Set 1 (index 0)
-                      const shouldAddRocketEmoji = isLastRow && isNotFirstSet && set && set.reps >= 12;
-                      const shouldAddMuscleEmoji = isLastRow && isNotFirstSet && set && set.reps < 12;
-
-                      console.log('shouldAddMuscleEmoji ' + shouldAddMuscleEmoji)
-
+                      const shouldAddAsterisk = isLastRow && isNotFirstSet && set && set.reps >= 12;
+                      
+                      // Check if we need to add muscle emoji (8-11 reps AND last row AND not the first set)
+                      const shouldAddMuscleEmoji = isLastRow && isNotFirstSet && set && (set.reps > 8 && set.reps < 12);
+                      
                       // Apply comparison coloring
                       if (prevVolume > 0) {
                         const percentChange = ((currentVolume - prevVolume) / prevVolume) * 100;
@@ -343,8 +351,8 @@ function App() {
                       }
                       
                       return (
-                        <td key={i} className={`py-2 px-4 border-b text-center ${cellColor}`}>
-                          {set ? `${set.reps || '-'} @ ${set.weight_kg || '-'}kg${shouldAddRocketEmoji ? ' 🚀' : ''}${shouldAddMuscleEmoji ? ' 💪' : ''}` : '-'}
+                        <td key={i} className={cellColor}>
+                          {set ? `${set.reps || '-'} @ ${set.weight_kg || '-'}kg${shouldAddAsterisk ? ' 🚀' : ''}${shouldAddMuscleEmoji ? ' 💪' : ''}` : '-'}
                         </td>
                       );
                     })}

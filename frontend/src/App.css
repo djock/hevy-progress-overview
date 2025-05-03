@@ -1,13 +1,43 @@
+/* Container styling */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+  
+  /* Adjust button sizes on mobile */
+  button {
+    padding: 6px 12px;
+    margin: 3px;
+  }
+  
+  /* Adjust headings on mobile */
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+  
+  .text-xl {
+    font-size: 1.125rem;
+  }
+}
+
+/* Headings */
 h1 {
   color: #333;
 }
 
+/* Button styling */
 button {
   cursor: pointer;
   padding: 8px 16px;
@@ -23,7 +53,7 @@ button.folder {
 }
 
 button.folder.selected {
-  background-color: #4a6da7;
+  background-color: #3b82f6; /* Blue - matching the refresh folders button */
   color: white;
 }
 
@@ -32,7 +62,7 @@ button.routine {
 }
 
 button.routine.selected {
-  background-color: #6a8f3d;
+  background-color: #10b981; /* Green - matching the refresh routines button */
   color: white;
 }
 
@@ -41,26 +71,17 @@ button.exercise {
 }
 
 button.exercise.selected {
-  background-color: #b86a3d;
+  background-color: #8b5cf6; /* Purple - matching the refresh exercises button */
   color: white;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+button.exercise {
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-th {
-  background-color: #333;
-  color: white;
-}
 
 /* Performance comparison colors */
 .bg-green-100 {
@@ -91,5 +112,220 @@ th {
 .bg-purple-400 {
   background-color: #c084fc;
 }
+
+/* Action buttons */
+.bg-green-500 {
+  background-color: #10b981; /* Green for routines */
+  color: white;
+}
+
+.bg-blue-500 {
+  background-color: #3b82f6; /* Blue for folders */
+  color: white;
+}
+
+.bg-purple-500 {
+  background-color: #8b5cf6; /* Purple for exercises */
+  color: white;
+}
+
+/* Utility classes */
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-white {
+  color: white;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+}
+
+/* Custom scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  text-align: center;
+}
+
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Responsive table styles */
+@media (max-width: 768px) {
+  table {
+    font-size: 0.875rem; /* Smaller font on mobile */
+  }
+  
+  th, td {
+    padding: 0.25rem 0.5rem; /* Smaller padding on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  table {
+    font-size: 0.75rem; /* Even smaller font on very small screens */
+  }
+  
+  th, td {
+    padding: 0.2rem 0.4rem; /* Minimal padding on very small screens */
+  }
+  
+  /* Hide the "Set" text on very small screens, just show the number */
+  th:not(:first-child)::before {
+    content: "#";
+  }
+  
+  th:not(:first-child)::after {
+    content: attr(data-set-number);
+  }
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-b {
+  border-bottom-width: 1px;
+}
+
+.border-gray-300 {
+  border-color: #d1d5db;
+}
+
+.bg-white {
+  background-color: white;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+
+
+
 
 
