@@ -36,6 +36,29 @@ function App() {
     calculateAndSavePRs();
   }, []);
 
+  // Add a new useEffect to select the first routine when routines are loaded
+  useEffect(() => {
+    if (routines && routines.length > 0) {
+      // Filter routines by selected folder if needed
+      const filteredRoutines = selectedFolder 
+        ? routines.filter(routine => routine.folder_id === selectedFolder)
+        : routines;
+      
+      // Select the first routine if there are any available
+      if (filteredRoutines.length > 0) {
+        selectRoutine(filteredRoutines[0].id);
+      }
+    }
+  }, [routines, selectedFolder]);
+
+  // Add a new useEffect to select the first folder when folders are loaded
+  useEffect(() => {
+    if (routineFolders && routineFolders.length > 0) {
+      // Select the first folder
+      filterRoutinesByFolder(routineFolders[0].id);
+    }
+  }, [routineFolders]);
+
   const calculateAndSavePRs = useCallback(async () => {
     try {
       const response = await axios.get('/api/workouts');
@@ -249,33 +272,19 @@ function App() {
       <h1 className="mb-4">Hevy Progress Tracker</h1>
       <Row className="mb-3">
         <Col>
-          <Button
-            variant="success"
-            className="me-2"
-            onClick={refreshRoutines}
-            disabled={refreshingRoutines}
-          >
-            {refreshingRoutines ? <Spinner size="sm" animation="border" /> : 'Refresh Routines'}
-          </Button>
-          <Button
-            variant="primary"
-            className="me-2"
-            onClick={refreshRoutineFolders}
-            disabled={refreshingFolders}
-          >
-            {refreshingFolders ? <Spinner size="sm" animation="border" /> : 'Refresh Folders'}
-          </Button>
+         
+          
           <Button
             variant="secondary"
-            className="me-2"
+            className="me-2 mb-2"
             onClick={refreshWorkouts}
             disabled={refreshing}
           >
-            {refreshing ? <Spinner size="sm" animation="border" /> : 'Refresh Workouts'}
-          </Button>
+            {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts'}
+          </Button> 
           <Button
             variant="warning"
-            className="me-2"
+            className="me-2 mb-2"
             onClick={() => setShowPRModal(true)}
           >
             Show PRs
@@ -307,15 +316,21 @@ function App() {
 
       <Row className="mb-4">
         <Col>
-          <h2>Folders</h2>
+          <h2>Folders
+          <span className="ms-2">
+
+              <Button
+                variant="primary"
+                className="me-2 mb-2"
+                onClick={refreshRoutineFolders}
+                disabled={refreshingFolders}
+              >
+              {refreshingFolders ? <Spinner size="sm" animation="border" /> : '↻'}
+              </Button>
+            </span>
+          </h2>
+          
           <div className="mb-2">
-            <Button
-              variant={selectedFolder === null ? "dark" : "outline-dark"}
-              className="me-2 mb-2"
-              onClick={() => filterRoutinesByFolder(null)}
-            >
-              All Routines
-            </Button>
             {routineFolders && routineFolders.map(folder => (
               <Button
                 key={folder.id}
@@ -332,7 +347,18 @@ function App() {
 
       <Row className="mb-4">
         <Col>
-          <h2>Routines</h2>
+          <h2>Routines
+            <span className="ms-2">
+              <Button
+                variant="success"
+                className="me-2 mb-2"
+                onClick={refreshRoutines}
+                disabled={refreshingRoutines}
+              >
+              {refreshingRoutines ? <Spinner size="sm" animation="border" /> : '↻'}
+              </Button>
+            </span>
+          </h2>
           <div>
             {routines && [...routines]
               .sort((a, b) => {
@@ -341,7 +367,7 @@ function App() {
                 }
                 return 0;
               })
-              .filter(routine => selectedFolder === null || routine.folder_id === selectedFolder)
+              .filter(routine => routine.folder_id === selectedFolder)
               .map(routine => (
                 <Button
                   key={routine.id}
@@ -383,68 +409,66 @@ function App() {
       )}
 
       {selectedExerciseType && (
-        <Row className="mb-4">
-          <Col>
-            <h2>{selectedExerciseType} History</h2>
-            {loading ? (
-              <Spinner animation="border" />
-            ) : exerciseHistory.length > 0 ? (
-              <div className="table-responsive">
-                <Table bordered hover>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      {Array.from({ length: maxSets }, (_, i) => (
-                        <th key={i}>Set {i + 1}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {exerciseHistory.map((exercise, exerciseIndex) => (
-                      <tr key={exerciseIndex}>
-                        <td>{formatDate(exercise.workout_date)}</td>
-                        {Array.from({ length: maxSets }, (_, i) => {
-                          const set = exercise.sets && exercise.sets.length > i ? exercise.sets[i] : null;
-                          const prevExercise = exerciseIndex > 0 ? exerciseHistory[exerciseIndex - 1] : null;
-                          const prevSet = prevExercise && prevExercise.sets && prevExercise.sets.length > i ? prevExercise.sets[i] : null;
-                          const currentVolume = set ? (set.reps || 0) * (set.weight_kg || 0) : 0;
-                          const prevVolume = prevSet ? (prevSet.reps || 0) * (prevSet.weight_kg || 0) : 0;
-                          let cellColor = "";
-                          const isLastRow = exerciseIndex === exerciseHistory.length - 1;
-                          const isNotFirstSet = i > 0;
-                          const shouldAddAsterisk = isLastRow && isNotFirstSet && set && set.reps >= 12;
-                          const shouldAddMuscleEmoji = isLastRow && isNotFirstSet && set && (set.reps > 8 && set.reps < 12);
-                          if (prevVolume > 0) {
-                            const percentChange = ((currentVolume - prevVolume) / prevVolume) * 100;
-                            if (percentChange === 0) cellColor = "table-warning";
-                            else if (percentChange > 15) cellColor = "table-success";
-                            else if (percentChange > 5) cellColor = "table-success";
-                            else if (percentChange < -15) cellColor = "table-danger";
-                            else if (percentChange < 0) cellColor = "table-danger";
-                          }
-                          return (
-                            <td key={i} className={cellColor}>
-                              {set
-                                ? `${getSetTypeEmoji(set.type)} ${set.reps || '-'} @ ${set.weight_kg || '-'}kg${shouldAddAsterisk ? ' 🚀' : ''}${shouldAddMuscleEmoji ? ' 💪' : ''}`
-                                : '-'}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-                <div className="text-muted small">
-                  <div>🚀 Weight can be increased in this situation</div>
-                  <div>💪 Still have to work on increasing reps</div>
-                  <div>(🌡️) Warmup / (⬇️) Dropset / (💀) Failure</div>
-                </div>
-              </div>
-            ) : (
-              <p>No history found for this exercise.</p>
-            )}
-          </Col>
-        </Row>
+        <Col className="mb-4">
+        <h2>{selectedExerciseType} History</h2>
+        {loading ? (
+          <Spinner animation="border" />
+        ) : exerciseHistory.length > 0 ? (
+          <div className="table-responsive">
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  {Array.from({ length: maxSets }, (_, i) => (
+                    <th key={i}>Set {i + 1}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {exerciseHistory.map((exercise, exerciseIndex) => (
+                  <tr key={exerciseIndex}>
+                    <td>{formatDate(exercise.workout_date)}</td>
+                    {Array.from({ length: maxSets }, (_, i) => {
+                      const set = exercise.sets && exercise.sets.length > i ? exercise.sets[i] : null;
+                      const prevExercise = exerciseIndex > 0 ? exerciseHistory[exerciseIndex - 1] : null;
+                      const prevSet = prevExercise && prevExercise.sets && prevExercise.sets.length > i ? prevExercise.sets[i] : null;
+                      const currentVolume = set ? (set.reps || 0) * (set.weight_kg || 0) : 0;
+                      const prevVolume = prevSet ? (prevSet.reps || 0) * (prevSet.weight_kg || 0) : 0;
+                      let cellColor = "";
+                      const isLastRow = exerciseIndex === exerciseHistory.length - 1;
+                      const isNotFirstSet = i > 0;
+                      const shouldAddAsterisk = isLastRow && isNotFirstSet && set && set.reps >= 12;
+                      const shouldAddMuscleEmoji = isLastRow && isNotFirstSet && set && (set.reps > 8 && set.reps < 12);
+                      if (prevVolume > 0) {
+                        const percentChange = ((currentVolume - prevVolume) / prevVolume) * 100;
+                        if (percentChange === 0) cellColor = "table-warning";
+                        else if (percentChange > 15) cellColor = "table-success";
+                        else if (percentChange > 5) cellColor = "table-success";
+                        else if (percentChange < -15) cellColor = "table-danger";
+                        else if (percentChange < 0) cellColor = "table-danger";
+                      }
+                      return (
+                        <td key={i} className={cellColor}>
+                          {set
+                            ? `${getSetTypeEmoji(set.type)} ${set.reps || '-'} @ ${set.weight_kg || '-'}kg${shouldAddAsterisk ? ' 🚀' : ''}${shouldAddMuscleEmoji ? ' 💪' : ''}`
+                            : '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            <div className="text-muted small">
+              <div>🚀 Weight can be increased in this situation</div>
+              <div>💪 Still have to work on increasing reps</div>
+              <div>(🌡️) Warmup / (⬇️) Dropset / (💀) Failure</div>
+            </div>
+          </div>
+        ) : (
+          <p>No history found for this exercise.</p>
+        )}
+      </Col>
       )}
     </Container>
   );
