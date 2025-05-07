@@ -41,6 +41,7 @@ DATA_DIR = "data"
 WORKOUTS_FILE = os.path.join(DATA_DIR, "workouts.json")
 ROUTINES_FILE = os.path.join(DATA_DIR, "routines.json")
 ROUTINE_FOLDERS_FILE = os.path.join(DATA_DIR, "routine_folders.json")
+PRS_FILE = os.path.join(DATA_DIR, "prs.json")
 
 # Ensure data directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -401,3 +402,22 @@ async def update_routine_folder_cache():
     all_folders = await fetch_all_routine_folders()
     save_routine_folders_to_cache(all_folders)
 
+@app.post("/api/save-prs")
+async def save_prs(prs: List[Dict]):
+    try:
+        with open(PRS_FILE, 'w') as f:
+            json.dump(prs, f, indent=2)
+        return {"status": "success", "message": "PRs saved successfully"}
+    except IOError as e:
+        raise HTTPException(status_code=500, detail=f"Error saving PRs: {str(e)}")
+
+@app.get("/api/load-prs")
+async def load_prs():
+    if not os.path.exists(PRS_FILE):
+        return []
+    
+    try:
+        with open(PRS_FILE, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        raise HTTPException(status_code=500, detail=f"Error loading PRs: {str(e)}")
