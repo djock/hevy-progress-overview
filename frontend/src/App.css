@@ -32,21 +32,6 @@
   }
 }
 
-/* Headings */
-h1 {
-  color: #333;
-}
-
-/* Button styling */
-button {
-  cursor: pointer;
-  padding: 8px 16px;
-  margin: 4px;
-  border: none;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-}
-
 /* Button styling for different categories */
 button.folder {
   background-color: #f0f0f0;
@@ -74,14 +59,6 @@ button.exercise.selected {
   background-color: #8b5cf6; /* Purple - matching the refresh exercises button */
   color: white;
 }
-
-button.exercise {
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease;
-  border: 1px solid #e5e7eb;
-}
-
 
 /* Performance comparison colors */
 .bg-green-100 {
@@ -129,134 +106,6 @@ button.exercise {
   color: white;
 }
 
-/* Utility classes */
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.mr-2 {
-  margin-right: 0.5rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.p-4 {
-  padding: 1rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.py-3 {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
-.rounded {
-  border-radius: 0.25rem;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-left {
-  text-align: left;
-}
-
-.text-2xl {
-  font-size: 1.5rem;
-}
-
-.text-xl {
-  font-size: 1.25rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.font-semibold {
-  font-weight: 600;
-}
-
-.text-gray-600 {
-  color: #4b5563;
-}
-
-.text-white {
-  color: white;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.flex {
-  display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.flex-wrap {
-  flex-wrap: wrap;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.overflow-x-auto {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scrollbar-width: thin; /* Firefox */
-}
-
-/* Custom scrollbar for webkit browsers */
-.overflow-x-auto::-webkit-scrollbar {
-  height: 6px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.items-start {
-  align-items: flex-start;
-}
-
 /* Table styling */
 table {
   width: 100%;
@@ -293,39 +142,29 @@ th {
   th, td {
     padding: 0.2rem 0.4rem; /* Minimal padding on very small screens */
   }
-  
-  /* Hide the "Set" text on very small screens, just show the number */
-  th:not(:first-child)::before {
-    content: "#";
-  }
-  
-  th:not(:first-child)::after {
-    content: attr(data-set-number);
-  }
 }
 
-.border {
-  border-width: 1px;
+.overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
 }
 
-.border-b {
-  border-bottom-width: 1px;
+/* Custom scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
 }
 
-.border-gray-300 {
-  border-color: #d1d5db;
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-.bg-white {
-  background-color: white;
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
 }
 
-.bg-gray-50 {
-  background-color: #f9fafb;
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
-
-
-
-
-
 

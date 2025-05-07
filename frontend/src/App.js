@@ -28,6 +28,7 @@ function App() {
   const [refreshingFolders, setRefreshingFolders] = useState(false);
   const [showPRModal, setShowPRModal] = useState(false);
   const [personalRecords, setPersonalRecords] = useState([]);
+  const [prSearchTerm, setPrSearchTerm] = useState('');
 
   useEffect(() => {
     fetchRoutineFolders();
@@ -267,6 +268,11 @@ function App() {
   // Find max sets for table columns
   const maxSets = Math.max(...(exerciseHistory.map(ex => ex.sets ? ex.sets.length : 0)), 0);
 
+  // Add a function to filter PRs based on search term
+  const filteredPRs = personalRecords.filter(pr => 
+    pr.exerciseTitle.toLowerCase().includes(prSearchTerm.toLowerCase())
+  );
+
   return (
     <Container className="py-4">
       <h1 className="mb-4">Hevy Progress Tracker</h1>
@@ -292,15 +298,26 @@ function App() {
         </Col>
       </Row>
 
-      <Modal show={showPRModal} onHide={() => setShowPRModal(false)} centered>
+      {/* PR Modal */}
+      <Modal show={showPRModal} onHide={() => setShowPRModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Personal Records</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {personalRecords.length === 0 ? (
-            <p>No PRs found.</p>
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search exercises..."
+              value={prSearchTerm}
+              onChange={(e) => setPrSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {filteredPRs.length === 0 ? (
+            <p>No PRs found matching your search.</p>
           ) : (
-            personalRecords.map((pr, index) => (
+            filteredPRs.map((pr, index) => (
               <div key={index} className="mb-2">
                 <strong>{pr.exerciseTitle}:</strong> {pr.reps} reps @ {pr.weight_kg}kg <Badge bg="light" text="dark">{formatDate(pr.workoutDate)}</Badge>
               </div>
@@ -308,7 +325,10 @@ function App() {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="primary" onClick={() => setShowPRModal(false)}>
+          <Button variant="primary" onClick={() => {
+            setShowPRModal(false);
+            setPrSearchTerm(''); // Clear search when closing
+          }}>
             Close
           </Button>
         </Modal.Footer>
