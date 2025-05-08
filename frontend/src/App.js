@@ -22,7 +22,6 @@ function App() {
   const [selectedExerciseType, setSelectedExerciseType] = useState(null);
   const [exerciseHistory, setExerciseHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedWorkout] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingRoutines, setRefreshingRoutines] = useState(false);
   const [refreshingFolders, setRefreshingFolders] = useState(false);
@@ -34,7 +33,7 @@ function App() {
     fetchRoutineFolders();
     fetchRoutines();
     extractExerciseTypes();
-    calculateAndSavePRs();
+    selectRoutine();
   }, []);
 
   // Add a new useEffect to select the first routine when routines are loaded
@@ -281,19 +280,19 @@ function App() {
          
           
           <Button
-            variant="secondary"
+            variant="info"
             className="me-2 mb-2"
             onClick={refreshWorkouts}
             disabled={refreshing}
           >
-            {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts'}
+            {refreshing ? 'Refreshing Workouts...' : 'Refresh Workouts ↻'}
           </Button> 
           <Button
-            variant="warning"
+            variant="info"
             className="me-2 mb-2"
             onClick={() => setShowPRModal(true)}
           >
-            Show PRs
+            Show PRs 🥇
           </Button>
         </Col>
       </Row>
@@ -340,7 +339,7 @@ function App() {
           <span className="ms-2">
 
               <Button
-                variant="primary"
+                variant="outline-secondary"
                 className="me-2 mb-2"
                 onClick={refreshRoutineFolders}
                 disabled={refreshingFolders}
@@ -354,7 +353,7 @@ function App() {
             {routineFolders && routineFolders.map(folder => (
               <Button
                 key={folder.id}
-                variant={selectedFolder === folder.id ? "dark" : "outline-dark"}
+                variant={selectedFolder === folder.id ? "outline-primary" : "outline-secondary"}
                 className="me-2 mb-2"
                 onClick={() => filterRoutinesByFolder(folder.id)}
               >
@@ -370,7 +369,7 @@ function App() {
           <h2>Routines
             <span className="ms-2">
               <Button
-                variant="success"
+                variant="outline-secondary"
                 className="me-2 mb-2"
                 onClick={refreshRoutines}
                 disabled={refreshingRoutines}
@@ -391,7 +390,7 @@ function App() {
               .map(routine => (
                 <Button
                   key={routine.id}
-                  variant={selectedRoutine === routine.id ? "primary" : "outline-primary"}
+                  variant={selectedRoutine === routine.id ? "outline-primary" : "outline-secondary"}
                   className="me-2 mb-2"
                   onClick={() => selectRoutine(routine.id)}
                 >
@@ -413,7 +412,7 @@ function App() {
                 {exerciseTypes.map((exercise, index) => (
                   <Button
                     key={index}
-                    variant={selectedExerciseType === exercise ? "success" : "outline-success"}
+                    variant={selectedExerciseType === exercise ? "outline-primary" : "outline-secondary"}
                     className="me-2 mb-2"
                     onClick={() => fetchExerciseHistory(exercise)}
                   >
