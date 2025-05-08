@@ -357,7 +357,7 @@ function App() {
                 className="me-2 mb-2"
                 onClick={() => filterRoutinesByFolder(folder.id)}
               >
-                {folder.title}
+                {folder.title} {selectedFolder === folder.id ? "•" : ""}
               </Button>
             ))}
           </div>
@@ -394,7 +394,7 @@ function App() {
                   className="me-2 mb-2"
                   onClick={() => selectRoutine(routine.id)}
                 >
-                  {routine.title || "Unnamed Routine"}
+                  {routine.title || "Unnamed Routine"}  {selectedRoutine === routine.id ? "•" : ""}
                 </Button>
               ))}
           </div>
@@ -416,7 +416,7 @@ function App() {
                     className="me-2 mb-2"
                     onClick={() => fetchExerciseHistory(exercise)}
                   >
-                    {exercise}
+                    {exercise}  {selectedExerciseType === exercise ? "•" : ""}
                   </Button>
                 ))}
               </div>
