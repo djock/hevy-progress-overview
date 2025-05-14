@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import {
   Container,
   Row,
@@ -13,7 +12,23 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
-  const [setWorkouts] = useState([]);
+  // Add state for caching data
+  const [workoutsCache, setWorkoutsCache] = useState([]);
+  const [routinesCache, setRoutinesCache] = useState([]);
+  const [routineFoldersCache, setRoutineFoldersCache] = useState([]);
+  
+  // Add Hevy API constants
+  const HEVY_API_KEY = process.env.REACT_APP_HEVY_API_KEY;
+  const BASE_URL = "https://api.hevyapp.com/v1";
+  
+  // Add headers for Hevy API
+  const HEADERS = {
+    "api-key": HEVY_API_KEY,
+    "Content-Type": "application/json"
+  };
+
+  // Existing state variables
+  const [workouts, setWorkouts] = useState([]);
   const [routines, setRoutines] = useState([]);
   const [routineFolders, setRoutineFolders] = useState([]);
   const [selectedRoutine, setSelectedRoutine] = useState(null);
@@ -28,6 +43,78 @@ function App() {
   const [showPRModal, setShowPRModal] = useState(false);
   const [personalRecords, setPersonalRecords] = useState([]);
   const [prSearchTerm, setPrSearchTerm] = useState('');
+
+  // Add function to fetch from Hevy API
+  const fetchFromHevyAPI = async (endpoint, page = 1) => {
+    const url = `${BASE_URL}/${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}`;
+    const response = await fetch(url, { headers: HEADERS });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return await response.json();
+  };
+
+  // Add function to fetch all pages of data
+  const fetchAllPages = async (endpoint, dataKey) => {
+    let allData = [];
+    let page = 1;
+    let totalPages = 1;
+    
+    while (page <= totalPages) {
+      const data = await fetchFromHevyAPI(endpoint, page);
+      
+      if (page === 1) {
+        totalPages = data.page_count || 1;
+      }
+      
+      if (data[dataKey] && Array.isArray(data[dataKey])) {
+        allData = [...allData, ...data[dataKey]];
+      }
+      
+      page++;
+    }
+    
+    return allData;
+  };
+
+  // Add function to fetch new workouts since a date
+  const fetchNewWorkouts = async (sinceDate) => {
+    let allWorkouts = [];
+    let page = 1;
+    let totalPages = 1;
+    
+    while (page <= totalPages) {
+      const data = await fetchFromHevyAPI('workouts', page);
+      
+      if (page === 1) {
+        totalPages = data.page_count || 1;
+      }
+      
+      if (data.workouts) {
+        const newWorkouts = data.workouts.filter(w => w.created_at > sinceDate);
+        allWorkouts = [...allWorkouts, ...newWorkouts];
+        
+        if (newWorkouts.length < data.workouts.length) {
+          break;
+        }
+      }
+      
+      page++;
+    }
+    
+    return allWorkouts;
+  };
+
+  // Add function to get latest workout date
+  const getLatestWorkoutDate = () => {
+    if (!workoutsCache || workoutsCache.length === 0) {
+      return null;
+    }
+    
+    return workoutsCache.reduce((latest, workout) => {
+      return workout.created_at > latest ? workout.created_at : latest;
+    }, workoutsCache[0].created_at);
+  };
 
   useEffect(() => {
     fetchRoutineFolders();
@@ -59,25 +146,34 @@ function App() {
     }
   }, [routineFolders]);
 
-  const calculateAndSavePRs = useCallback(async () => {
+  // Load PRs from localStorage on startup
+  useEffect(() => {
+    const savedPRs = localStorage.getItem('personalRecords');
+    if (savedPRs) {
+      try {
+        setPersonalRecords(JSON.parse(savedPRs));
+      } catch (e) {
+        console.error('Error parsing saved PRs:', e);
+      }
+    }
+  }, []);
+
+  const calculateAndSavePRs = useCallback(() => {
     try {
-      const response = await axios.get('/api/workouts');
-      const workouts = response.data;
-      const prs = extractPersonalRecords(workouts);
+      const prs = extractPersonalRecords(workoutsCache);
       setPersonalRecords(prs);
-      await axios.post('/api/save-prs', prs);
+      localStorage.setItem('personalRecords', JSON.stringify(prs));
     } catch (error) {
       console.error('Error calculating PRs:', error);
     }
-  }, []);
+  }, [workoutsCache]);
 
   const fetchRoutineFolders = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/routine_folders');
-      if (response.data) {
-        setRoutineFolders(response.data);
-      }
+      const folders = await fetchAllPages('routine_folders', 'routine_folders');
+      setRoutineFoldersCache(folders);
+      setRoutineFolders(folders);
     } catch (error) {
       console.error('Error fetching routine folders:', error);
     } finally {
@@ -88,10 +184,9 @@ function App() {
   const fetchRoutines = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/routines');
-      if (response.data) {
-        setRoutines(response.data);
-      }
+      const routinesData = await fetchAllPages('routines', 'routines');
+      setRoutinesCache(routinesData);
+      setRoutines(routinesData);
     } catch (error) {
       console.error('Error fetching routines:', error);
     } finally {
@@ -162,14 +257,26 @@ function App() {
   const fetchExerciseHistory = async (exerciseType) => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/exercises/by-type/${encodeURIComponent(exerciseType)}`);
-      if (response.data) {
-        const sortedHistory = [...response.data].sort((a, b) =>
-          new Date(a.workout_date) - new Date(b.workout_date)
-        );
-        setExerciseHistory(sortedHistory);
-        setSelectedExerciseType(exerciseType);
-      }
+      // Filter exercises from cache instead of API call
+      const matchingExercises = [];
+      workoutsCache.forEach(workout => {
+        (workout.exercises || []).forEach(exercise => {
+          if (exercise.title && exercise.title.toLowerCase() === exerciseType.toLowerCase()) {
+            matchingExercises.push({
+              ...exercise,
+              workout_date: workout.created_at,
+              workout_id: workout.id
+            });
+          }
+        });
+      });
+      
+      const sortedHistory = [...matchingExercises].sort((a, b) =>
+        new Date(a.workout_date) - new Date(b.workout_date)
+      );
+      
+      setExerciseHistory(sortedHistory);
+      setSelectedExerciseType(exerciseType);
     } catch (error) {
       console.error('Error fetching exercise history:', error);
       setExerciseHistory([]);
@@ -181,15 +288,34 @@ function App() {
   const refreshWorkouts = async () => {
     setRefreshing(true);
     try {
-      await axios.get('/api/workouts/refresh');
-      extractExerciseTypes();
-      if (selectedRoutine) {
-        fetchRoutineWorkouts(selectedRoutine);
+      const latestDate = getLatestWorkoutDate();
+      let updatedWorkouts;
+      
+      if (latestDate) {
+        const newWorkouts = await fetchNewWorkouts(latestDate);
+        // Combine and remove duplicates
+        const allWorkouts = [...newWorkouts, ...workoutsCache];
+        updatedWorkouts = Array.from(new Map(allWorkouts.map(w => [w.id, w])).values());
+      } else {
+        updatedWorkouts = await fetchAllPages('workouts', 'workouts');
       }
+      
+      setWorkoutsCache(updatedWorkouts);
+      extractExerciseTypes(updatedWorkouts);
+      
+      if (selectedRoutine) {
+        const routineWorkouts = updatedWorkouts.filter(w => w.routine_id === selectedRoutine);
+        setWorkouts(routineWorkouts);
+      }
+      
       if (selectedExerciseType) {
         fetchExerciseHistory(selectedExerciseType);
       }
-      await calculateAndSavePRs();
+      
+      const prs = extractPersonalRecords(updatedWorkouts);
+      setPersonalRecords(prs);
+      // Store PRs in localStorage instead of backend
+      localStorage.setItem('personalRecords', JSON.stringify(prs));
     } catch (error) {
       console.error('Error refreshing workouts:', error);
     } finally {
@@ -200,8 +326,9 @@ function App() {
   const refreshRoutines = async () => {
     setRefreshingRoutines(true);
     try {
-      await axios.get('/api/routines/refresh');
-      await fetchRoutines();
+      const routinesData = await fetchAllPages('routines', 'routines');
+      setRoutinesCache(routinesData);
+      setRoutines(routinesData);
     } catch (error) {
       console.error('Error refreshing routines:', error);
     } finally {
@@ -212,8 +339,9 @@ function App() {
   const refreshRoutineFolders = async () => {
     setRefreshingFolders(true);
     try {
-      await axios.get('/api/routine_folders/refresh');
-      await fetchRoutineFolders();
+      const folders = await fetchAllPages('routine_folders', 'routine_folders');
+      setRoutineFoldersCache(folders);
+      setRoutineFolders(folders);
     } catch (error) {
       console.error('Error refreshing routine folders:', error);
     } finally {
