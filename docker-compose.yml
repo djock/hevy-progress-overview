@@ -1,15 +1,6 @@
 version: '3.8'
 
 services:
-  backend:
-    build: ./app
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./app:/app
-      - ./app/data:/app/data  # Ensure data directory persists
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
   frontend:
     build: ./frontend
     ports:
@@ -21,6 +12,4 @@ services:
       - WATCHPACK_POLLING=true
       - FAST_REFRESH=true
       - CHOKIDAR_USEPOLLING=true
-    depends_on:
-      - backend
 
