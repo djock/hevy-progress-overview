@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -24,6 +25,14 @@ type InsightEngineProps = {
 };
 
 type MetricMode = 'estimated1RM' | 'totalVolume';
+
+type ChartDatum = {
+  estimated1RM: number;
+  isEstimated1RMPr: boolean;
+  isTotalVolumePr: boolean;
+  label: string;
+  totalVolume: number;
+};
 
 export function InsightEngine({
   contextLabel,
@@ -55,15 +64,70 @@ export function InsightEngine({
     [change, latestSession]
   );
 
-  const chartData = useMemo(
-    () =>
-      sessions.map((session) => ({
-        estimated1RM: Number(session.estimated1RM.toFixed(1)),
-        label: session.sessionLabel,
-        totalVolume: Number(session.totalVolume.toFixed(0))
-      })),
+  const chartData = useMemo<ChartDatum[]>(
+    () => {
+      let bestEstimated1RM = 0;
+      let bestTotalVolume = 0;
+
+      return sessions.map((session) => {
+        const estimated1RM = Number(session.estimated1RM.toFixed(1));
+        const totalVolume = Number(session.totalVolume.toFixed(0));
+        const isEstimated1RMPr = estimated1RM >= bestEstimated1RM;
+        const isTotalVolumePr = totalVolume >= bestTotalVolume;
+
+        bestEstimated1RM = Math.max(bestEstimated1RM, estimated1RM);
+        bestTotalVolume = Math.max(bestTotalVolume, totalVolume);
+
+        return {
+          estimated1RM,
+          isEstimated1RMPr,
+          isTotalVolumePr,
+          label: session.sessionLabel,
+          totalVolume
+        };
+      });
+    },
     [sessions]
   );
+
+  const xAxisTicks = useMemo(() => {
+    if (chartData.length === 0) {
+      return [];
+    }
+
+    const latestIndex = chartData.length - 1;
+    const peakIndex = chartData.reduce((bestIndex, entry, index, items) => {
+      return entry[metricMode] > items[bestIndex][metricMode] ? index : bestIndex;
+    }, 0);
+
+    return Array.from(new Set([0, peakIndex, latestIndex])).map((index) => chartData[index].label);
+  }, [chartData, metricMode]);
+
+  const prDots = useMemo(
+    () =>
+      chartData
+        .filter((entry) =>
+          metricMode === 'estimated1RM' ? entry.isEstimated1RMPr : entry.isTotalVolumePr
+        )
+        .map((entry) => (
+          <ReferenceDot
+            key={`${metricMode}-${entry.label}`}
+            x={entry.label}
+            y={entry[metricMode]}
+            r={4}
+            fill="#f4f4f5"
+            stroke={metricMode === 'estimated1RM' ? '#3b82f6' : '#2dd4bf'}
+            strokeWidth={2}
+            ifOverflow="extendDomain"
+          />
+        )),
+    [chartData, metricMode]
+  );
+
+  const estimated1RMSignal =
+    latestSession && previousSession
+      ? latestSession.estimated1RM / Math.max(previousSession.estimated1RM, 1) - 1
+      : null;
 
   if (!exerciseTitle || sessions.length === 0) {
     return (
@@ -111,12 +175,27 @@ export function InsightEngine({
           </button>
         </div>
 
+        <div className="insight-metric-strip">
+          <article className={`comparison-card comparison-card--metric ${signal.className}`}>
+            <span>{signal.label}</span>
+            <p>{formatPercent(change)}</p>
+            <small>Volume vs previous session</small>
+          </article>
+
+          <article className="comparison-card comparison-card--metric comparison-card--metric-blue">
+            <span>Estimated 1RM</span>
+            <p>{formatMetric(latestSession?.estimated1RM || 0, ' kg', 1)}</p>
+            <small>{formatPercent(estimated1RMSignal)} vs previous session</small>
+          </article>
+        </div>
+
         <div className="insight-chart">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 18, right: 12, left: -12, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis
                 dataKey="label"
+                ticks={xAxisTicks}
                 tickLine={false}
                 axisLine={false}
                 tick={{ fill: 'rgba(244, 244, 245, 0.65)', fontSize: 12 }}
@@ -129,7 +208,7 @@ export function InsightEngine({
               <Tooltip
                 contentStyle={{
                   background: 'rgba(24, 24, 27, 0.94)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 16
                 }}
                 labelStyle={{ color: '#f4f4f5' }}
@@ -139,15 +218,26 @@ export function InsightEngine({
                 dataKey={metricMode}
                 stroke={metricMode === 'estimated1RM' ? '#3b82f6' : '#2dd4bf'}
                 strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 0 }}
+                dot={false}
                 activeDot={{ r: 6 }}
                 animationDuration={420}
               />
+              {prDots}
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         <div className="comparison-grid">
+          <article className="comparison-card comparison-card--target">
+            <span>Target for Next Session</span>
+            <strong>{change !== null && change > 0 ? 'Advance load' : 'Stabilize output'}</strong>
+            <p>{formatMetric(targetSession?.totalVolume || 0, ' kg')}</p>
+            <small>
+              Target set {formatMetric(targetSession?.bestSetWeight || 0, ' kg')} · Est 1RM{' '}
+              {formatMetric(targetSession?.estimated1RM || 0, ' kg', 1)}
+            </small>
+          </article>
+
           <article className="comparison-card">
             <span>Last Session</span>
             <strong>{formatLongDate(latestSession?.date)}</strong>
@@ -165,16 +255,6 @@ export function InsightEngine({
             <small>
               Peak set {formatMetric(prSession?.bestSetWeight || 0, ' kg')} · Est 1RM{' '}
               {formatMetric(prSession?.estimated1RM || 0, ' kg', 1)}
-            </small>
-          </article>
-
-          <article className="comparison-card">
-            <span>Target for Next</span>
-            <strong>{change !== null && change > 0 ? 'Advance load' : 'Stabilize output'}</strong>
-            <p>{formatMetric(targetSession?.totalVolume || 0, ' kg')}</p>
-            <small>
-              Target set {formatMetric(targetSession?.bestSetWeight || 0, ' kg')} · Est 1RM{' '}
-              {formatMetric(targetSession?.estimated1RM || 0, ' kg', 1)}
             </small>
           </article>
         </div>

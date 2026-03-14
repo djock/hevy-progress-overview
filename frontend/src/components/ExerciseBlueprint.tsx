@@ -51,6 +51,15 @@ function Sparkline({ sessions }: { sessions: ExerciseSession[] }) {
   );
 }
 
+function BaselinePlaceholder() {
+  return (
+    <div className="exercise-card__placeholder" aria-hidden="true">
+      <span className="exercise-card__placeholder-label">No baseline yet</span>
+      <p>Log one more session to unlock trend and progression insights.</p>
+    </div>
+  );
+}
+
 export function ExerciseBlueprint({
   cards,
   contextDescription,
@@ -81,6 +90,7 @@ export function ExerciseBlueprint({
           cards.map((card, index) => {
             const latestSession = card.sessions[card.sessions.length - 1];
             const isSelected = selectedExerciseTitle === card.exerciseTitle;
+            const hasBaseline = card.signal.change !== null;
 
             return (
               <button
@@ -96,31 +106,39 @@ export function ExerciseBlueprint({
                     <h3>{card.exerciseTitle}</h3>
                   </div>
                   <div className="exercise-card__badges">
-                    <span className={`signal-badge ${card.signal.className}`}>
-                      {card.signal.icon} {card.signal.label}
-                    </span>
+                    {hasBaseline ? (
+                      <span className={`signal-badge ${card.signal.className}`}>
+                        {card.signal.icon} {card.signal.label}
+                      </span>
+                    ) : null}
                     {card.isRecentPr ? <span className="pr-badge">PR</span> : null}
                   </div>
                 </div>
 
-                <div className="exercise-card__chart">
-                  <Sparkline sessions={card.sessions} />
-                </div>
+                {hasBaseline ? (
+                  <>
+                    <div className="exercise-card__chart">
+                      <Sparkline sessions={card.sessions} />
+                    </div>
 
-                <div className="exercise-card__metrics">
-                  <div>
-                    <span>Last volume</span>
-                    <strong>{formatMetric(latestSession?.totalVolume || 0, ' kg')}</strong>
-                  </div>
-                  <div>
-                    <span>Trend</span>
-                    <strong>{formatPercent(card.signal.change)}</strong>
-                  </div>
-                  <div>
-                    <span>Last session</span>
-                    <strong>{formatLongDate(latestSession?.date)}</strong>
-                  </div>
-                </div>
+                    <div className="exercise-card__metrics">
+                      <div>
+                        <span>Last volume</span>
+                        <strong>{formatMetric(latestSession?.totalVolume || 0, ' kg')}</strong>
+                      </div>
+                      <div>
+                        <span>Trend</span>
+                        <strong>{formatPercent(card.signal.change)}</strong>
+                      </div>
+                      <div>
+                        <span>Last session</span>
+                        <strong>{formatLongDate(latestSession?.date)}</strong>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <BaselinePlaceholder />
+                )}
               </button>
             );
           })

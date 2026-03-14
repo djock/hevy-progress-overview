@@ -179,21 +179,23 @@ export function RoutineSidebar({
             <h2>Muscle focus</h2>
           </div>
         </div>
-        <div className="heatmap-grid">
-          {muscleSignals.map((muscle) => (
-            <button
-              key={muscle.label}
-              type="button"
-              className={`heatmap-tile ${muscleFilter === muscle.label ? 'is-active' : ''}`}
-              onClick={() => onMuscleFilterChange(muscle.label)}
-              style={{ ['--heat' as string]: muscle.score }}
-            >
-              <div className="heatmap-tile__content">
-                <strong>{muscle.label}</strong>
-                <span>{muscle.score} hits</span>
-              </div>
-            </button>
-          ))}
+        <div className="sidebar-section__body">
+          <div className="heatmap-grid">
+            {muscleSignals.map((muscle) => (
+              <button
+                key={muscle.label}
+                type="button"
+                className={`heatmap-tile ${muscleFilter === muscle.label ? 'is-active' : ''}`}
+                onClick={() => onMuscleFilterChange(muscle.label)}
+                style={{ ['--heat' as string]: muscle.score }}
+              >
+                <div className="heatmap-tile__content">
+                  <strong>{muscle.label}</strong>
+                  <span>{muscle.score} hits</span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
     </aside>
